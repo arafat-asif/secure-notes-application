@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
     lowercase: true,
     trim: true
   },
@@ -31,7 +30,7 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 /*
- * Required indexes only:
+ * Required indexes:
  * 1. Unique email supports login and user lookup.
  * 2. createdAt supports paginated admin user listing.
  */
