@@ -21,3 +21,5 @@ async function connectDB() {
     throw error;
   }
 }
+
+export default connectDB;
