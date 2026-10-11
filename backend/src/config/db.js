@@ -1,23 +1,23 @@
-
 import mongoose from "mongoose";
 
-export default async function connectDB() {
-  const uri = process.env.MONGODB_URI;
+export async function connectDB() {
+  const uri = process.env.MONGODB_URI?.trim();
 
-  if (!uri) {
-    throw new Error("MONGODB_URI is required");
+  if (
+    !uri ||
+    !(uri.startsWith("mongodb://") ||
+      uri.startsWith("mongodb+srv://"))
+  ) {
+    throw new Error(
+      "MONGODB_URI is missing or has an invalid MongoDB URI scheme"
+    );
   }
-
-  let hostname;
 
   try {
-    hostname = new URL(uri).hostname;
-  } catch {
-    throw new Error("MONGODB_URI is not a valid URL");
+    await mongoose.connect(uri);
+    console.log("MongoDB connected successfully");
+  } catch (error) {
+    console.error("MongoDB connection failed:", error.message);
+    throw error;
   }
-
-  console.log("MongoDB hostname being used:", hostname);
-
-  await mongoose.connect(uri);
-  console.log("MongoDB connected successfully");
 }
