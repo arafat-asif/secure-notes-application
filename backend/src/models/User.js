@@ -1,40 +1,32 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-    maxlength: 100
-  },
-  email: {
-    type: String,
-    required: true,
-    lowercase: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true,
-    select: false
-  },
-  role: {
-    type: String,
-    enum: ["USER", "ADMIN"],
-    default: "USER"
-  },
-  interests: {
-    type: [String],
-    default: []
-  }
+  name: { type: String, required: true, trim: true, maxlength: 100 },
+  email: { type: String, required: true, lowercase: true, trim: true, maxlength: 254 },
+  password: { type: String, required: true, minlength: 8, select: false },
+  role: { type: String, enum: ['user', 'admin'], default: 'user', required: true },
+  active: { type: Boolean, default: true }
 }, { timestamps: true });
 
-/*
- * Required indexes:
- * 1. Unique email supports login and user lookup.
- * 2. createdAt supports paginated admin user listing.
- */
 userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ createdAt: -1 });
+userSchema.index({ role: 1, createdAt: -1 });
 
-export default mongoose.model("User", userSchema);
+userSchema.pre('save', async function () {
+  if (!this.isModified('password')) return;
+  this.password = await bcrypt.hash(this.password, 12);
+});
+
+userSchema.methods.comparePassword = function (candidate) {
+  return bcrypt.compare(candidate, this.password);
+};
+
+userSchema.set('toJSON', {
+  transform(_doc, ret) {
+    delete ret.password;
+    delete ret.__v;
+    return ret;
+  }
+});
+
+export default mongoose.model('User', userSchema);

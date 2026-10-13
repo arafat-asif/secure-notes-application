@@ -27,38 +27,18 @@
 
 import mongoose from "mongoose";
 
-async function connectDB() {
-  const rawUri = process.env.MONGODB_URI;
-  const uri = rawUri?.trim();
-
-  console.log("MONGODB_URI exists:", rawUri !== undefined);
-  console.log("MONGODB_URI is empty:", !uri);
-  console.log(
-    "MONGODB_URI scheme:",
-    uri?.split(":")[0] ?? "MISSING"
-  );
-
-  if (
-    !uri ||
-    !(
-      uri.startsWith("mongodb://") ||
-      uri.startsWith("mongodb+srv://")
-    )
-  ) {
-    throw new Error("MONGODB_URI is missing or invalid");
-  }
-
-  // Diagnostic: print hostname only, never credentials
-  const parsed = new URL(uri);
-  console.log("MongoDB hostname:", parsed.hostname);
-
+export default async function connectDB() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) throw new Error('MONGODB_URI is missing. Set it in backend/.env');
+  let parsed;
   try {
-    await mongoose.connect(uri);
-    console.log("MongoDB connected successfully");
-  } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
-    throw error;
+    parsed = new URL(uri);
+  } catch {
+    throw new Error('MONGODB_URI is not a valid URL. Check the full MongoDB connection string.');
   }
+  if (!['mongodb:', 'mongodb+srv:'].includes(parsed.protocol)) {
+    throw new Error('MONGODB_URI must start with mongodb:// or mongodb+srv://');
+  }
+  await mongoose.connect(uri);
+  console.log('MongoDB connected');
 }
-
-export default connectDB;
