@@ -6,15 +6,26 @@ import userRoutes from './routes/userRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 const app = express();
-const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173' || 'https://secure-notes-application-zarj.vercel.app')
+const allowedOrigins = (
+  process.env.CLIENT_ORIGIN ||
+  'http://localhost:5173,https://secure-notes-application-zarj.vercel.app'
+)
   .split(',')
-  .map((origin) => origin.trim());
+  .map((origin) => origin.trim().replace(/\/$/, ''));
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+    const normalizedOrigin = origin?.replace(/\/$/, '');
+
+    if (
+      !origin ||
+      allowedOrigins.includes('*') ||
+      allowedOrigins.includes(normalizedOrigin)
+    ) {
       return callback(null, true);
     }
+
+    console.error('Blocked CORS origin:', origin);
     return callback(new Error('Origin not allowed by CORS'));
   },
   credentials: true
